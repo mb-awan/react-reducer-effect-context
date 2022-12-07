@@ -12,9 +12,19 @@ const Login = (props) => {
   const [formIsValid, setFormIsValid] = useState(false);
 
   useEffect(()=> {
-    setFormIsValid(
-        enteredEmail.includes('@') && enteredPassword.trim().length > 6
-    );
+    console.log('Validation is Running');
+    const identifier = setTimeout(()=> {
+      console.log('Validation after 5 sec')
+      setFormIsValid(
+          enteredEmail.includes('@') && enteredPassword.trim().length > 6
+      );
+    }, 5000); // Now Validation will be after 5 seconds of keyStroke
+    return ()=> {
+      console.log('CleanUp is Running Bro');
+      // Using this Clean Up to clear the last setTimeOut
+      clearTimeout(identifier);
+      // Now Validation will be done after the last keystroke has been 5 seconds old.
+    }
   }, [enteredEmail ,enteredPassword]) // Will run when component renders first time and then when any of two dependencies get changed
 
   const emailChangeHandler = (event) => {
