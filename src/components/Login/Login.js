@@ -1,51 +1,67 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useReducer, useState} from 'react';
 
 import Card from '../UI/Card/Card';
 import classes from './Login.module.css';
 import Button from '../UI/Button/Button';
 
+const emailReducer = (prevState, action) => {
+  if(action.type === 'USER_INPUT'){
+    return {value: action.value, isValid: action.value.includes('@')};
+  }
+  else if(action.type === 'INPUT_BLUR'){
+    return {value: prevState.value, isValid: prevState.value.includes('@')};
+  }
+  return {value: '' ,valid: false};
+}
+
+const passwordReducer = (prevState, action) => {
+  if(action.type === 'USER_INPUT'){
+    return {value: action.value, isValid: action.value.trim().length >= 6};
+  }
+  else if(action.type === 'INPUT_BLUR'){
+    return {value: prevState.value, isValid: prevState.value.trim().length >= 6};
+  }
+  return {value: '' ,valid: false};
+}
+
 const Login = (props) => {
-  const [enteredEmail, setEnteredEmail] = useState('');
-  const [emailIsValid, setEmailIsValid] = useState();
-  const [enteredPassword, setEnteredPassword] = useState('');
-  const [passwordIsValid, setPasswordIsValid] = useState();
+  const [ emailStates, dispatchEmail] = useReducer(emailReducer, { value: '', isValid: false});
+  const [ passwordStates, dispatchPassword] = useReducer(passwordReducer, { value: '', isValid: false});
   const [formIsValid, setFormIsValid] = useState(false);
 
+  const { isValid: emailIsValid} = emailStates;
+  const { isValid: passwordIsValid} = passwordStates;
   useEffect(()=> {
-    console.log('Validation is Running');
-    const identifier = setTimeout(()=> {
-      console.log('Validation after 5 sec')
-      setFormIsValid(
-          enteredEmail.includes('@') && enteredPassword.trim().length > 6
-      );
-    }, 5000); // Now Validation will be after 5 seconds of keyStroke
-    return ()=> {
-      console.log('CleanUp is Running Bro');
-      // Using this Clean Up to clear the last setTimeOut
-      clearTimeout(identifier);
-      // Now Validation will be done after the last keystroke has been 5 seconds old.
-    }
-  }, [enteredEmail ,enteredPassword]) // Will run when component renders first time and then when any of two dependencies get changed
+    // const identifier = setTimeout(() => {
+      console.log('Checking form validity!');
+      setFormIsValid(emailIsValid && passwordIsValid);
+    // }, 500);
+
+    return () => {
+      console.log('CLEANUP');
+      // clearTimeout(identifier);
+    };
+  }, [emailIsValid, passwordIsValid])
 
   const emailChangeHandler = (event) => {
-    setEnteredEmail(event.target.value);
+    dispatchEmail({type: 'USER_INPUT', value: event.target.value});
   };
 
   const passwordChangeHandler = (event) => {
-    setEnteredPassword(event.target.value);
+    dispatchPassword({ type: 'USER_INPUT', value: event.target.value});
   };
 
   const validateEmailHandler = () => {
-    setEmailIsValid(enteredEmail.includes('@'));
+    dispatchEmail({type: 'INPUT_BLUR'});
   };
 
   const validatePasswordHandler = () => {
-    setPasswordIsValid(enteredPassword.trim().length > 6);
+    dispatchPassword({ type: 'INPUT_BLUR'});
   };
 
   const submitHandler = (event) => {
     event.preventDefault();
-    props.onLogin(enteredEmail, enteredPassword);
+    props.onLogin(emailStates.value, passwordStates.value);
   };
 
   return (
@@ -53,28 +69,28 @@ const Login = (props) => {
       <form onSubmit={submitHandler}>
         <div
           className={`${classes.control} ${
-            emailIsValid === false ? classes.invalid : ''
+            emailStates.isValid ? classes.invalid : ''
           }`}
         >
           <label htmlFor="email">E-Mail</label>
           <input
             type="email"
             id="email"
-            value={enteredEmail}
+            value={emailStates.value}
             onChange={emailChangeHandler}
             onBlur={validateEmailHandler}
           />
         </div>
         <div
           className={`${classes.control} ${
-            passwordIsValid === false ? classes.invalid : ''
+            passwordStates.isValid ? classes.invalid : ''
           }`}
         >
           <label htmlFor="password">Password</label>
           <input
             type="password"
             id="password"
-            value={enteredPassword}
+            value={passwordStates.value}
             onChange={passwordChangeHandler}
             onBlur={validatePasswordHandler}
           />
